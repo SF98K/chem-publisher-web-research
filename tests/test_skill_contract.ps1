@@ -7,9 +7,12 @@ $ErrorActionPreference = 'Stop'
 $requiredFiles = @(
     'SKILL.md',
     'references/common-workflow.md',
+    'references/batch-doi.md',
     'references/publishers.md',
     'references/zotero.md',
-    'scripts/push_to_zotero.py'
+    'scripts/push_to_zotero.py',
+    'scripts/prepare_doi_batch.py',
+    'scripts/record_doi_result.py'
 )
 
 foreach ($relativePath in $requiredFiles) {

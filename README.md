@@ -12,6 +12,7 @@
 | 查看一篇论文的信息 | 标题、作者、期刊、日期、卷期页码或文章号、DOI、摘要/关键词（页面可见时）和访问状态 |
 | 导出引用 | 优先导出出版社页面提供的 RIS 或 BibTeX；没有原生导出时，明确标记为“页面提取元数据” |
 | 下载 PDF | 在你已有访问权限时下载 PDF，并报告开放获取、已认证访问或不可访问状态 |
+| Excel DOI 批量下载 | 读取 `.xlsx` 或 CSV 的 DOI 列，生成可恢复清单并顺序下载有权限的 PDF |
 | 导入 Zotero | 将 RIS 文件或整理好的 JSON 文献信息导入正在运行的 Zotero 桌面端 |
 
 ## 使用前：先让浏览器获得学校访问权限
@@ -68,6 +69,38 @@ $publisher-web-research 从这个 Nature 文章页面提取元数据，导出 Bi
 $publisher-web-research 浏览 RSC 的 Journal of Materials Chemistry A 当前期，筛选电催化相关文章。
 ```
 
+## Excel DOI 批量下载
+
+Excel 第一行需要有 `doi` 列，列名不区分大小写。支持 `.xlsx` 和 UTF-8 CSV；旧的 `.xls` 文件请先在 Excel 中另存为 `.xlsx`。原始表格不会被修改。
+
+先生成批处理清单：
+
+```powershell
+python scripts\prepare_doi_batch.py --input .\papers.xlsx --output .\doi-download-manifest.csv
+```
+
+清单会去除 DOI 链接前缀、合并重复 DOI，并保留原始行号。随后指定已登录学校访问权限的浏览器执行下载：
+
+```text
+@Chrome 使用 $publisher-web-research 按 doi-download-manifest.csv 中 status 为 pending 的条目逐篇下载 PDF，保存到 D:\Papers；每完成一篇就更新清单。
+```
+
+或：
+
+```text
+@Edge 使用 $publisher-web-research 按 Excel 的 doi 列批量下载可访问 PDF。我已经在 Edge 中登录学校 VPN。
+```
+
+每篇处理后，Skill 会在清单记录 DOI、出版社、官方文章页、PDF 路径和状态。若任务中断，继续处理 `pending` 状态即可，已经成功下载的条目不会重复处理。
+
+常用状态包括：
+
+- `downloaded`：已下载；
+- `unavailable`：当前账号或 IP 无法访问；
+- `login-required`：需要重新登录；
+- `verification-required`：需要在浏览器人工完成验证；
+- `failed`：其他错误，保留错误原因以便重试。
+
 ## PDF 下载与访问边界
 
 Skill 只会在以下条件同时满足时下载 PDF：
@@ -94,7 +127,14 @@ C:\Users\XJF\AppData\Local\Programs\Python\Python311\python.exe scripts\push_to_
 
 ## 浏览器控制说明
 
-要让 Skill 直接操作已登录的浏览器页面，当前 Codex 会话需要接入浏览器控制工具。没有这类工具时，Skill 仍可：
+要让 Skill 直接操作已登录的浏览器页面，当前 Codex 会话需要接入浏览器控制工具。在 Codex Desktop 中，可分别连接 Chrome 和 Edge 的 ChatGPT 浏览器扩展。
+
+- 已在 Chrome 登录学校 VPN 时，用 `@Chrome`；
+- 已在 Edge 登录学校 VPN 时，用 `@Edge`；
+- 两者都已连接时，优先使用已打开出版社页面且已有访问权限的浏览器；没有已打开页面时，请明确指定一个浏览器；
+- `@Browser` 是独立的内置浏览器，不会继承 Chrome 或 Edge 的登录态，因此不适合学校 VPN 下载。
+
+没有这类工具时，Skill 仍可：
 
 - 提供出版社官方页面路径；
 - 整理你给出的文章链接和页面信息；

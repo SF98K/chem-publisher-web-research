@@ -1,6 +1,6 @@
 ---
 name: publisher-web-research
-description: Use when browsing, searching, extracting metadata, exporting citations, downloading accessible PDFs, or sending citations to Zotero from ScienceDirect, ACS Publications, RSC Publishing, Wiley Online Library, Science/AAAS, or Nature Portfolio.
+description: Use when browsing, searching, extracting metadata, exporting citations, downloading accessible PDFs, importing DOI spreadsheets, or sending citations to Zotero from ScienceDirect, ACS Publications, RSC Publishing, Wiley Online Library, Science/AAAS, or Nature Portfolio.
 ---
 
 # Publisher web research
@@ -17,6 +17,7 @@ Supported publishers: ScienceDirect, ACS Publications, RSC Publishing, Wiley Onl
 | Find or inspect an article | [common workflow](references/common-workflow.md), then [publisher guide](references/publishers.md) |
 | Export RIS/BibTeX or add a citation to Zotero | [zotero guide](references/zotero.md) |
 | Download an article PDF | [common workflow](references/common-workflow.md) |
+| Download accessible PDFs from a DOI spreadsheet | [DOI batch guide](references/batch-doi.md), then [common workflow](references/common-workflow.md) |
 
 ## Operating rules
 
@@ -25,6 +26,20 @@ Supported publishers: ScienceDirect, ACS Publications, RSC Publishing, Wiley Onl
 3. Download only when the user asks for it and the browser session visibly shows an accessible PDF link. Report `open access`, `authenticated access`, or `unavailable` before saving.
 4. If the site asks for sign-in, institutional access, or human verification, stop and ask the user to complete it in their own browser. Do not submit credentials, preserve session data, or retry around verification.
 5. Send citations to Zotero only on request. Prefer RIS. Use `scripts/push_to_zotero.py` for RIS or normalized JSON, then add any already-downloaded PDF from Zotero desktop.
+
+## Browser choice
+
+For an existing browser login, use the browser explicitly mentioned by the user: `@Chrome` or `@Edge`. When only one connected browser is available, use that browser. When both are available, use the one that already has the publisher page and confirmed institutional access; otherwise ask the user to choose. Do not switch to `@Browser` for a task that needs an existing Chrome or Edge login.
+
+## DOI batch download
+
+For a `.xlsx` or `.csv` file with a `doi` column, first create a manifest:
+
+```powershell
+python scripts\prepare_doi_batch.py --input .\papers.xlsx --output .\doi-download-manifest.csv
+```
+
+Work through manifest rows whose status is `pending`, one at a time. Open `doi_url` in the chosen connected browser, identify the final official publisher page, and follow the PDF-download workflow. After each outcome, update that row with `scripts\record_doi_result.py`. Read [DOI batch guide](references/batch-doi.md) for supported statuses, resume behavior, and commands.
 
 ## Result shape
 
