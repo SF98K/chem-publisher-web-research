@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.ris
+*.bib
+*.pdf
+*.zip
+*.log
+.DS_Store
+Thumbs.db
+credentials*
+cookies*
+*.session
+*.token
