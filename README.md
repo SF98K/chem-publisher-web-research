@@ -107,6 +107,8 @@ python scripts\prepare_doi_batch.py --input .\papers.xlsx --output .\doi-downloa
 
 WorkBuddy 版只有在平台当前可用的浏览器工具已打开出版社页面，且该会话已拥有学校 IP 或登录账号赋予的访问权限时，才会下载用户明确要求的 PDF。它不会假定能共享本机 Chrome 或 Edge 的登录状态。
 
+验证范围：已执行离线脚本和包结构检查，尚未在真实 WorkBuddy 环境完成安装与机构会话下载的端到端测试。本包不附带浏览器控制工具，也不自带 Zotero 自动连接脚本；无 Zotero 接入时交付 RIS/BibTeX，由用户在 Zotero 的“文件 → 导入”中导入。
+
 ## PDF 下载与访问边界
 
 Skill 只会在以下条件同时满足时下载 PDF：

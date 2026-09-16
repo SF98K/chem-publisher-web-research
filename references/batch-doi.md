@@ -2,7 +2,7 @@
 
 ## 输入与清单
 
-输入支持 `.xlsx` 与 UTF-8 CSV。表格第一行必须有 `doi` 列名，大小写不敏感；可通过 `--doi-column` 指定其他列名。脚本会清除 `doi:` 和 `https://doi.org/` 前缀、去除结尾标点、按 DOI 去重，并生成 CSV 清单。原 Excel 不会被改写。
+输入支持 `.xlsx` 与 UTF-8 CSV。XLSX 仅读取第一个工作表。表格第一行必须有 `doi` 列名，大小写不敏感；可通过 `--doi-column` 指定其他列名。脚本会清除 `doi:` 和 `https://doi.org/` 前缀、按 DOI 去重，并生成 CSV 清单。重复 DOI 保留首次出现的行号；末尾标点可能属于 DOI，因此不自动删除，额外复制的标点需人工核对。原 Excel 不会被改写。输出文件已存在时拒绝覆盖，请直接恢复已有清单。
 
 ```powershell
 python scripts\prepare_doi_batch.py --input .\papers.xlsx --output .\doi-download-manifest.csv

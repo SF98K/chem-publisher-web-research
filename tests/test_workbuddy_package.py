@@ -36,6 +36,20 @@ class WorkBuddyPackageTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("WorkBuddy package checks passed", result.stdout)
 
+    def test_distributed_scripts_match_tested_sources(self):
+        for name in ("prepare_doi_batch.py", "record_doi_result.py"):
+            self.assertEqual((PACKAGE / "scripts" / name).read_bytes(), (PACKAGE.parents[1] / "scripts" / name).read_bytes())
+
+    def test_documented_recorder_flags_exist(self):
+        import re
+        result = subprocess.run([sys.executable, str(PACKAGE / "scripts/record_doi_result.py"), "--help"], capture_output=True, text=True, check=True)
+        for relative in ("SKILL.md", "references/batch-doi.md"):
+            text = (PACKAGE / relative).read_text(encoding="utf-8")
+            for line in text.splitlines():
+                if line.startswith("python3 scripts/record_doi_result.py"):
+                    for flag in re.findall(r"--[a-z-]+", line):
+                        self.assertIn(flag, result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -45,6 +45,14 @@ def main():
 
     path = Path(args.manifest)
     try:
+        if args.status == "downloaded":
+            if not args.pdf_path:
+                raise ValueError("downloaded requires --pdf-path to an existing PDF file.")
+            pdf = Path(args.pdf_path).resolve()
+            with pdf.open("rb") as handle:
+                if not handle.read(1024).startswith(b"%PDF-"):
+                    raise ValueError("Downloaded file does not have a PDF header.")
+            args.pdf_path = str(pdf)
         fieldnames, rows = read_manifest(path)
         target = next((row for row in rows if row.get("source_row") == str(args.source_row)), None)
         if target is None:

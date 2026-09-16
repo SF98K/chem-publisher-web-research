@@ -6,6 +6,7 @@ import csv
 import re
 import sys
 import zipfile
+from urllib.parse import quote
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -13,7 +14,6 @@ from xml.etree import ElementTree as ET
 SPREADSHEET_NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 REL_NS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 DOI_PREFIX = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", re.IGNORECASE)
-TRAILING_PUNCTUATION = ".,;:)]}>\"'"
 MANIFEST_FIELDS = [
     "source_row",
     "source_doi",
@@ -30,10 +30,10 @@ MANIFEST_FIELDS = [
 def normalize_doi(value):
     """Return a canonical DOI text or an empty string for an empty cell."""
     doi = DOI_PREFIX.sub("", str(value or "").strip()).strip()
-    doi = doi.rstrip(TRAILING_PUNCTUATION).strip().lower()
+    doi = doi.lower()
     if not doi:
         return ""
-    if not doi.startswith("10.") or "/" not in doi:
+    if not re.fullmatch(r"10\.\d{4,9}/\S+", doi):
         raise ValueError(f"Not a DOI: {value}")
     return doi
 
@@ -79,6 +79,9 @@ def read_xlsx(path):
         root = ET.fromstring(archive.read(first_sheet_path(archive)))
     rows = []
     for row in root.findall(f".//{SPREADSHEET_NS}sheetData/{SPREADSHEET_NS}row"):
+        row_number = int(row.attrib.get("r", len(rows) + 1))
+        while len(rows) < row_number - 1:
+            rows.append([])
         values = {}
         for cell in row.findall(f"{SPREADSHEET_NS}c"):
             reference = cell.attrib.get("r", "")
@@ -143,7 +146,7 @@ def build_manifest(rows, doi_column):
             "source_row": source_row,
             "source_doi": source_doi,
             "doi": doi,
-            "doi_url": f"https://doi.org/{doi}",
+            "doi_url": f"https://doi.org/{quote(doi, safe='/')}",
             "status": "pending",
             "publisher": "",
             "article_url": "",
@@ -155,7 +158,7 @@ def build_manifest(rows, doi_column):
 
 def write_manifest(path, rows):
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
+    with path.open("x", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=MANIFEST_FIELDS)
         writer.writeheader()
         writer.writerows(rows)

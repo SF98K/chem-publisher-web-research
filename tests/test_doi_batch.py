@@ -34,7 +34,7 @@ class DoiBatchTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             with manifest.open(encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle))
-            self.assertEqual([row["doi"] for row in rows], ["10.1000/abc.1", "10.5555/xyz"])
+            self.assertEqual([row["doi"] for row in rows], ["10.1000/abc.1", "10.5555/xyz."])
             self.assertEqual([row["source_row"] for row in rows], ["2", "4"])
             self.assertEqual([row["status"] for row in rows], ["pending", "pending"])
 
@@ -55,12 +55,14 @@ class DoiBatchTests(unittest.TestCase):
             source = Path(directory) / "input.csv"
             manifest = Path(directory) / "manifest.csv"
             source.write_text("doi\n10.1000/example\n", encoding="utf-8")
+            pdf = Path(directory) / "example.pdf"
+            pdf.write_bytes(b"%PDF-1.7\n%%EOF")
             self.assertEqual(self.run_tool(source, manifest).returncode, 0)
             result = subprocess.run(
                 [
                     sys.executable, str(RECORDER), "--manifest", str(manifest),
                     "--source-row", "2", "--status", "downloaded",
-                    "--publisher", "ACS Publications", "--pdf-path", "D:/Papers/example.pdf",
+                    "--publisher", "ACS Publications", "--pdf-path", str(pdf),
                 ],
                 capture_output=True,
                 text=True,
@@ -71,7 +73,57 @@ class DoiBatchTests(unittest.TestCase):
                 row = next(csv.DictReader(handle))
             self.assertEqual(row["status"], "downloaded")
             self.assertEqual(row["publisher"], "ACS Publications")
-            self.assertEqual(row["pdf_path"], "D:/Papers/example.pdf")
+            self.assertEqual(row["pdf_path"], str(pdf.resolve()))
+
+    def test_rerun_preserves_existing_manifest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "input.csv"
+            manifest = Path(directory) / "manifest.csv"
+            source.write_text("doi\n10.1000/example\n", encoding="utf-8")
+            manifest.write_text("existing progress", encoding="utf-8")
+            self.assertNotEqual(self.run_tool(source, manifest).returncode, 0)
+            self.assertEqual(manifest.read_text(), "existing progress")
+
+    def test_doi_preserves_suffix_and_encodes_url(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "input.csv"
+            manifest = Path(directory) / "manifest.csv"
+            source.write_text("doi\n10.1000/a(1)\n10.1000/a#b\n10.foo/bar\n", encoding="utf-8")
+            self.assertEqual(self.run_tool(source, manifest).returncode, 0)
+            with manifest.open(encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual(rows[0]["doi"], "10.1000/a(1)")
+            self.assertEqual(rows[1]["doi_url"], "https://doi.org/10.1000/a%23b")
+            self.assertEqual(rows[2]["status"], "invalid-doi")
+
+    def test_xlsx_sparse_row_numbers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "input.xlsx"
+            self.write_minimal_xlsx(source)
+            with zipfile.ZipFile(source) as archive:
+                entries = {name: archive.read(name) for name in archive.namelist()}
+            sheet = "xl/worksheets/sheet1.xml"
+            entries[sheet] = entries[sheet].replace(b'r="2"', b'r="8"').replace(b'r="A2"', b'r="A8"')
+            with zipfile.ZipFile(source, "w") as archive:
+                for name, content in entries.items():
+                    archive.writestr(name, content)
+            manifest = Path(directory) / "manifest.csv"
+            self.assertEqual(self.run_tool(source, manifest).returncode, 0)
+            with manifest.open(encoding="utf-8") as handle:
+                self.assertEqual(next(csv.DictReader(handle))["source_row"], "8")
+
+    def test_html_cannot_be_recorded_as_pdf(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "input.csv"
+            manifest = Path(directory) / "manifest.csv"
+            source.write_text("doi\n10.1000/example\n", encoding="utf-8")
+            self.assertEqual(self.run_tool(source, manifest).returncode, 0)
+            before = manifest.read_bytes()
+            pdf = Path(directory) / "login.pdf"
+            pdf.write_text("<html>Login</html>")
+            result = subprocess.run([sys.executable, str(RECORDER), "--manifest", str(manifest), "--source-row", "2", "--status", "downloaded", "--pdf-path", str(pdf)], capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(manifest.read_bytes(), before)
 
     @staticmethod
     def write_minimal_xlsx(path):
