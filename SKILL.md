@@ -29,6 +29,8 @@ Supported publishers: ScienceDirect, ACS Publications, RSC Publishing, Wiley Onl
 
 ## Browser choice
 
+For Windows users requesting their everyday Edge session, read [current Edge session control](references/edge-current-session.md). First verify an actual connection to existing tabs. If no browser connector is available, the included Windows UI Automation helper can inspect and operate an existing Edge window. Never silently substitute a fresh `browser_profile`, a new automation profile, or HTTP-only OA retrieval for the requested authenticated session. A connected browser is not proof of institutional entitlement; verify the article page and actual downloaded file separately.
+
 For an existing browser login, use the browser explicitly mentioned by the user: `@Chrome` or `@Edge`. When only one connected browser is available, use that browser. When both are available, use the one that already has the publisher page and confirmed institutional access; otherwise ask the user to choose. Do not switch to `@Browser` for a task that needs an existing Chrome or Edge login.
 
 ## DOI batch download

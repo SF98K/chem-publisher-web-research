@@ -135,7 +135,9 @@ C:\Users\XJF\AppData\Local\Programs\Python\Python311\python.exe scripts\push_to_
 
 ## 浏览器控制说明
 
-要让 Skill 直接操作已登录的浏览器页面，当前 Codex 会话需要接入浏览器控制工具。在 Codex Desktop 中，可分别连接 Chrome 和 Edge 的 ChatGPT 浏览器扩展。
+Windows Codex 用户现可尝试[当前 Edge 会话控制](references/edge-current-session.md)：辅助脚本通过 Windows 界面操作现有 Edge，无需新建 `browser_profile`。本机已实测读取标签页、导航和读取出版社页面；ScienceDirect 随后要求真人验证，订阅 PDF 下载尚未实测通过。此功能需要交互桌面，不能保证每个网页控件都支持自动点击。该脚本尚未加入 WorkBuddy 包。
+
+使用浏览器插件时，须先确认当前宿主确实提供对应连接工具，并能读取用户已有标签页。下面的 @Chrome / @Edge 示例仅在宿主提供对应入口时适用；写入这些名称本身不会建立浏览器连接。
 
 - 已在 Chrome 登录学校 VPN 时，用 `@Chrome`；
 - 已在 Edge 登录学校 VPN 时，用 `@Edge`；
