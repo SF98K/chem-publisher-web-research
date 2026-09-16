@@ -101,6 +101,12 @@ python scripts\prepare_doi_batch.py --input .\papers.xlsx --output .\doi-downloa
 - `verification-required`：需要在浏览器人工完成验证；
 - `failed`：其他错误，保留错误原因以便重试。
 
+## 腾讯 WorkBuddy 版本
+
+仓库同时提供独立的 [WorkBuddy Skill 包](workbuddy/chem-publisher-web-research)。它使用 WorkBuddy 所需的双语前置字段，保留 DOI 表格清单和逐条可恢复记录脚本。请在 WorkBuddy Open Platform 的 Skills 页面按当前的创建或导入流程使用该目录；不要把其中的 `SKILL.md` 覆盖到 Codex 本地 Skill。
+
+WorkBuddy 版只有在平台当前可用的浏览器工具已打开出版社页面，且该会话已拥有学校 IP 或登录账号赋予的访问权限时，才会下载用户明确要求的 PDF。它不会假定能共享本机 Chrome 或 Edge 的登录状态。
+
 ## PDF 下载与访问边界
 
 Skill 只会在以下条件同时满足时下载 PDF：
